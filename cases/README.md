@@ -14,7 +14,7 @@ This folder contains all simulation setups from the thesis, divided by chapter:
 	- Turbine-only (prescribed motion).
 
 The folder `Tests` contains basic _tutorials_ to test the new features, namely:
-- Prescribed-motion turbine, `prescribed_ALM`
+- Prescribed-motion actuator line and turbine, `prescribed_ALM`
 - Turbine coupling with rigid-body, `rigidBody_ALM`
 
 Requisites
