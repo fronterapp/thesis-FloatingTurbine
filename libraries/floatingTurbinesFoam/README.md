@@ -20,7 +20,7 @@ Features
 
 Modifications
 -----
-Apart from the evident motion routines, some minor aspects were changed from the original `turbinesFoam`:
+Apart from the motion routines, some minor aspects were changed from the original `turbinesFoam`:
 - **Blade pitch definition**. The changes are discussed [here](https://github.com/turbinesFoam/turbinesFoam/issues/350).
 - **End-effects corrections**. In `axialFlowTurbineALSource::calcEndEffects()`, the rotor plane direction is defined as `-axis` instead of `freeStreamDirection`, since the rotor plane might move. 
 - **Zero division**. If the turbine is moving upwind at exactly the freestream velocity, the relative velocity equals zero. Some modifications have been introduced to `actuatorLineElement.C` to avoid this situation. It affects:
