@@ -1,0 +1,21 @@
+#!/bin/bash
+
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Use the correct decomposeParDict
+rm ./system/decomposeParDict
+cp ./system/decomposeParDict_solver ./system/decomposeParDict
+
+nProc=$(getNumberOfProcessors)
+
+#Decompose case again
+runApplication decomposePar
+
+# Renumber meshto get a more diagonal system
+renumber_application="mpirun --oversubscribe -np $nProc renumberMesh -overwrite -parallel"
+runApplication $renumber_application
+mv log.mpirun log.renumberMesh
+
+

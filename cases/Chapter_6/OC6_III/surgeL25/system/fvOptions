@@ -1,0 +1,310 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  6                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvOptions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "../myVars" //Include global variables
+
+
+turbine
+{
+    type            axialFlowTurbineALSource;
+    active          on;
+
+    axialFlowTurbineALSourceCoeffs
+    {
+        fieldNames          (U);
+        selectionMode       cellSet; // cellSet || points || cellZone
+        cellSet             turbine;
+        origin              (0 0 $hub_h);
+        axis                (-1 0 0);
+        verticalDirection   (0 0 1);
+        freeStreamVelocity  ($Ux 0 0);
+        tipSpeedRatio       $TSR;
+        rotorRadius         $R;
+        velocitySampleRadius #calc "$D/10";
+        nVelocitySamples    20;
+
+        prescribedMotion
+        {
+            active                  on;
+            rotationCenter          (0 0 $hub_h); //m
+            initialRotation         (0 0 0); // deg
+            motionType              harmonic1st;
+            harmonic1stCoeffs
+            {
+                translationAmplitude    ($surge_a 0 0); // m
+                translationFrequency    ($surge_f 0 0); // Hz
+                rotationAmplitude       (0 0 0); // deg
+                rotationFrequency       (0 0 0); // Hz
+            }
+        }
+
+        dynamicStall
+        {
+            active          off;
+            dynamicStallModel LeishmanBeddoes; // LeishmanBeddoes|LeishmanBeddoes3G|LeishmanBeddoesSD|LeishmanBeddoesSGC
+        }
+
+        endEffects
+        {
+            active          on;
+            endEffectsModel Glauert; // Glauert || Shen || liftingLine
+            GlauertCoeffs
+            {
+                tipEffects  on;
+                rootEffects on;
+            }
+            /*
+            ShenCoeffs
+            {
+                c1          0.125;
+                c2          21;
+                tipEffects  on;
+                rootEffects on;
+            }*/
+        }
+
+        blades
+        {
+            blade1
+            {
+                writePerf   true;
+                writeElementPerf true;
+                nElements   38;
+                elementProfiles
+                (
+                    station1
+                    station2
+                    station3
+                    station4
+                    station5
+                    station6
+                    station7
+                    station8
+                    station9
+                    station10
+                    station11
+                    station12
+                    station13
+                    station14
+                    station15
+                    station16
+                    station17
+                    station18
+                    station19
+                    station20
+                );
+                elementData
+                (
+                    #include "elementData"
+                );
+            }
+            blade2
+            {
+                $blade1;
+                writePerf   true;
+                writeElementPerf true;
+                azimuthalOffset 120.0;
+            }
+            blade3
+            {
+                $blade2;
+                azimuthalOffset 240.0;
+            }
+        }
+
+/*
+        tower
+        {
+	        writePerf   true;
+            writeElementPerf true;
+            includeInTotalDrag  false; // default is false
+            nElements   18;
+            elementProfiles (cylinder);
+            elementData
+            ( // axial distance (turbine axis), height, diameter
+                (-0.14 -0.82 0.09)
+                (-0.14 -0.66 0.08)
+                (-0.14 -0.42 0.06)
+                (-0.14  0.00 0.05)
+            );
+        }
+
+        hub
+        {
+            nElements   1;
+            elementProfiles (cylinder);
+            elementData
+            ( // axial distance, height, diameter
+                (0 0.09 0.09)
+                (0 -0.09 0.09)
+            );
+        }
+*/
+        
+        profileData
+        {
+            station1
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station1.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station1.txt");
+            }
+            station2
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station2.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station2.txt");
+            }
+            station3
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station3.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station3.txt");
+            }
+
+            station4
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station4.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station4.txt");
+            }
+            station5
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station5.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station5.txt");
+            }
+            station6
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station6.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station6.txt");
+            }
+            station7
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station7.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station7.txt");
+            }
+            station8
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station8.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station8.txt");
+            }
+            station9
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station9.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station9.txt");
+            }
+            station10
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station10.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station10.txt");
+            }
+            station11
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station11.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station11.txt");
+            }
+            station12
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station12.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station12.txt");
+            }
+            station13
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station13.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station13.txt");
+            }
+            station14
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station14.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station14.txt");
+            }
+            station15
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station15.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station15.txt");
+            }
+            station16
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station16.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station16.txt");
+            }
+            station17
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station17.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station17.txt");
+            }
+            station18
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station18.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station18.txt");
+            }
+            station19
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station19.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station19.txt");
+            }
+            station20
+            {
+                tableType multiRe;
+                ReList (5.0E+04 6.0E+04 7.5E+04 1.0E+05 1.5E+05 1.7E+05 2.0E+05);
+                clData (#include "../../resources/foilData/Cl_OC6_Station20.txt");
+                cdData (#include "../../resources/foilData/Cd_OC6_Station20.txt");
+            }
+
+            cylinder
+            {
+                data ((-180 0 1.1)(180 0 1.1));
+            }
+        }
+    }
+}
+
+// ************************************************************************* //

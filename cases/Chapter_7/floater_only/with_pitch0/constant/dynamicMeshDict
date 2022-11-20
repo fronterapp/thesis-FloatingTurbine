@@ -1,0 +1,117 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.5                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      motionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "../myVars" //Include global variables
+
+dynamicFvMesh dynamicMotionSolverFvMesh;
+motionSolverLibs 
+(
+  "libfvMotionSolvers.so"
+  "libfloatingSixDoFRigidBodyMotion.so"
+);
+solver sixDoFRigidBodyMotion;
+diffusivity     quadratic inverseDistance ( floater );
+ 
+sixDoFRigidBodyMotionCoeffs
+{
+  patches         ( floater );
+  innerDistance   #calc "1.5*$BL_thick";
+  outerDistance   #calc "$zmax - ($plat_comz)"; //distance to the closest boundary (top)
+  centreOfMass    ($total_comx 0 $total_comz);
+  mass            $total_mass;
+  g               ( 0 0 -9.8065);
+  momentOfInertia ($plat_Ixx $plat_Iyy $plat_Izz);
+  velocity        ( 0    0   0 );
+  //angularMomentum (0    0   0); //units [kg-m^2*deg/s]
+  orientation     $plat_orientation;  //Rotation tensor (ZYX convention), see http://planning.cs.uiuc.edu/node102.html
+  
+  //rhoName         rhoInf; //For incompressible, in case density is uniform
+  //rhoInf          1024.81;
+
+  accelerationRelaxation 1.0;
+  accelerationDamping 1.0;
+  report          on;
+  reportToFile    on;
+  solver
+  {
+      type            Newmark;
+  }
+
+  constraints
+  {
+    pitchOnly
+    {
+      sixDoFRigidBodyMotionConstraint   axis;
+      axis                              (0.0 1.0 0.0);
+    }
+
+    surgeOnly
+    {
+      sixDoFRigidBodyMotionConstraint   line;
+      direction                         (1.0 0.0 0.0);
+    }
+  }
+
+   restraints
+   {
+    
+      turbineThrust
+      {
+        sixDoFRigidBodyMotionRestraint constantLoad;
+        applicationPt   $hub_pos; // Hub position
+        movePt          true; // Move CoG with rigid body
+        force           (4.725E+5 0.0 0.0); // Thrust (global frame)
+        torque          (0.0 0.0 0.0); // None  
+      }
+    
+    
+      catenaryLine1 // Towards -X
+      {
+        sixDoFRigidBodyMotionRestraint mooringLine;
+        anchor              (#calc "-837.6-$surge_offset" 0.0 -200); // Anchor point, where the line is attached to an immovable object
+        //refAttachmentPt     (-40.868 0.0 -14); // Reference point of attachment to the solid bodyy
+        refAttachmentPt     $attachmentLine1;
+        massPerLength       108.63; // Mass per unit length
+        lineLength          865.5; // Length of the mooring line
+        gravityVector       $g; // Gravity vector
+        thickness           0.0766; // Line thickness, used only for visualization purposes
+      }
+      catenaryLine2 // Towards +X +Y
+      {
+        sixDoFRigidBodyMotionRestraint mooringLine;
+        anchor              (#calc "418.8-$surge_offset" 725.4 -200); // Anchor point, where the line is attached to an immovable object
+        //refAttachmentPt     (#calc "40.868/2" #calc "40.868*sqrt(3.0)/2"  -14); // Reference point of attachment to the solid body
+        refAttachmentPt     $attachmentLine2;        
+        massPerLength       108.63; // Mass per unit length
+        lineLength          865.5; // Length of the mooring line
+        gravityVector       $g; // Gravity vector
+        thickness           0.0766; // Line thickness, used only for visualization purposes
+      }
+      catenaryLine3 // Towards +X -Y
+      {
+        sixDoFRigidBodyMotionRestraint mooringLine;
+        anchor              (#calc "418.8-$surge_offset" -725.4 -200); // Anchor point, where the line is attached to an immovable object
+        //refAttachmentPt     (#calc "40.868/2" #calc "-40.868*sqrt(3.0)/2" -14);; // Reference point of attachment to the solid body
+        refAttachmentPt     $attachmentLine3;        
+        massPerLength       108.63; // Mass per unit length
+        lineLength          865.5; // Length of the mooring line
+        gravityVector       $g; // Gravity vector
+        thickness           0.0766; // Line thickness, used only for visualization purposes
+      }
+    }
+   
+}
+
+// ************************************************************************* //

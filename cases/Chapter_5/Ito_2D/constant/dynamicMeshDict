@@ -1,0 +1,68 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.5                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      motionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "../myVars" //Include global variables
+
+dynamicFvMesh dynamicMotionSolverFvMesh;
+motionSolverLibs ("libsixDoFRigidBodyMotion.so");
+solver sixDoFRigidBodyMotion;
+diffusivity     quadratic inverseDistance ( cylinder );
+ 
+ sixDoFRigidBodyMotionCoeffs
+ {
+     patches         ( cylinder );
+     innerDistance   #calc "2.5*$cyl_a";
+     outerDistance   #calc "6*$cyl_a";
+     centreOfMass    (0    0   0);
+     mass            #calc "500*($zmax-($zmin))*pow($cyl_a,2)*M_PI"; //Mass of the cylinder SECTION, given a 500 kg/m^3 density
+     g               ( 0 -9.8065 0 );
+     Ix              #calc "$mass*(3*$cyl_a*$cyl_a+($zmax-($zmin))*($zmax-($zmin)))/12";
+     Iz              #calc "0.5*$mass*$cyl_a*$cyl_a";
+     momentOfInertia ( $Ix  $Ix $Iz);
+     velocity        ( 0    0   0 );
+     //angularMomentum (0    0   0); //units [kg-m^2*deg/s]
+     //orientation (1 0 0 0 1 0 0 0 1); //Rotation tensor, see http://planning.cs.uiuc.edu/node102.html
+     
+     //rhoName         rhoInf; //For incompressible, in case density is uniform
+     //rhoInf          1024.81;
+
+     accelerationRelaxation 1.0;
+     accelerationDamping 1.0;
+     report          on;
+     reportToFile    on;
+     solver
+     {
+         type            Newmark;
+     }
+     constraints
+     {
+        heaveConstraint
+        {
+          sixDoFRigidBodyMotionConstraint   line;
+          direction                         (0 1 0);
+        }
+
+        noRot
+        {
+          sixDoFRigidBodyMotionConstraint   orientation;
+          centreOfRotation                  (0 0 0);
+        }
+     }
+     restraints
+     {
+     }
+ }
+
+// ************************************************************************* //

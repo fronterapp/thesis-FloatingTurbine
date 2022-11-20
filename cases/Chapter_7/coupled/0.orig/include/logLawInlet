@@ -1,0 +1,57 @@
+// Logarithmic profile inlet condition
+
+type fixedValue;
+value #codeStream
+{
+	codeInclude
+	#{
+		#include "fvCFD.H"
+	#};
+
+	codeOptions
+	#{
+		-I$(LIB_SRC)/finiteVolume/lnInclude \
+		-I$(LIB_SRC)/meshTools/lnInclude
+	#};
+
+	codeLibs
+	#{
+		-lmeshTools \
+		-lfiniteVolume
+	#};
+
+	code
+	#{
+		const IOdictionary& d = static_cast<const IOdictionary&>
+		(
+			dict.parent().parent()
+		);
+
+		const fvMesh& mesh = refCast<const fvMesh>(d.db());
+		const label id = mesh.boundary().findPatchID("inlet");
+		const fvPatch& patch = mesh.boundary()[id];
+
+		vectorField U(patch.size(), vector(0, 0, 0));
+
+		//const scalar U_ref = 9.0; //Hub height vel
+		//const scalar z_ref = 90.0; //Hub height
+		//const scalar z_0 = 0.00609; // Surface roughness length	
+		//const scalar z_ground = 0.0; //Ground height
+		scalar U_h = 0.0; //Height-varying velocity
+
+		forAll(U, i)
+		{
+			const scalar z = patch.Cf()[i][2];
+			if (z-$z_ground>$z_0) // Above ground height
+			{	
+				U_h = $U_ref * log((z-$z_ground)/$z_0)/log(($z_ref-$z_ground)/$z_0); //Log profile
+				U[i] = vector(U_h, 0., 0.);	
+			} 
+			else U[i] = vector(0., 0., 0.);	 
+		};
+
+		U.writeEntry("",os);
+
+	#};
+
+};

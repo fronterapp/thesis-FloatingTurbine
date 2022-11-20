@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+nProc=$(getNumberOfProcessors)
+
+# Host name
+cat $PBS_NODEFILE 
+(
+for host in `cat $PBS_NODEFILE | sort -u -V`
+do
+     count=`grep $host $PBS_NODEFILE | wc -l`
+     echo $host cpu=$count
+done
+
+) > host_file
+cat host_file
+
+# Set solver name
+solver="mpirun -np $nProc --hostfile host_file waveDyMFoam -parallel"
+
+# Run the solver
+runApplication $solver
+mv log.mpirun log.waveDyMFoam

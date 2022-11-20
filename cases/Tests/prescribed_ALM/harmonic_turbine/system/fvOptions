@@ -1,0 +1,159 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  6                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvOptions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+turbine
+{
+    type            axialFlowTurbineALSource;
+    active          on;
+
+    axialFlowTurbineALSourceCoeffs
+    {
+        fieldNames          (U);
+        selectionMode       cellSet; // cellSet || points || cellZone
+        cellSet             turbine;
+        origin              (0.2 0.2 0.2);
+        axis                (-1 0 0);
+        verticalDirection   (0 0 1);
+        freeStreamVelocity  (10 0 0);
+        tipSpeedRatio       6;
+        rotorRadius         0.45;
+
+        harmonicFloaterMotion
+        {
+            active                  on;
+            rotationCenter          (-0.2 -0.2 -0.2); //m
+            initialRotation         (15 15 15); // deg
+            motionType              harmonic1st;
+            harmonic1stCoeffs
+            {
+                translationAmplitude    (0.25 0.25 0.25); // m
+                translationFrequency    (2 2 2); // Hz
+                rotationAmplitude       (45 45 45); // deg
+                rotationFrequency       (2 2 2); // Hz
+            }
+        }
+
+        dynamicStall
+        {
+            active          off;
+            dynamicStallModel LeishmanBeddoes;
+        }
+
+        endEffects
+        {
+            active          off;
+            endEffectsModel Glauert; // Glauert || Shen || liftingLine
+            GlauertCoeffs
+            {
+                tipEffects  on;
+                rootEffects on;
+            }
+            ShenCoeffs
+            {
+                c1          0.125;
+                c2          21;
+                tipEffects  on;
+                rootEffects on;
+            }
+        }
+
+        blades
+        {
+            blade1
+            {
+                writePerf   true;
+                writeElementPerf true;
+                nElements   28;
+                elementProfiles
+                (
+                    cylinder
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                    S826
+                );
+                elementData
+                (
+                    #include "elementData"
+                );
+            }
+            blade2
+            {
+                $blade1;
+                writePerf   true;
+                writeElementPerf true;
+                azimuthalOffset 120.0;
+            }
+            blade3
+            {
+                $blade2;
+                azimuthalOffset 240.0;
+            }
+        }
+
+        tower
+        {
+	    writePerf   true;
+            writeElementPerf true;
+            includeInTotalDrag  false; // default is false
+            nElements   18;
+            elementProfiles (cylinder);
+            elementData
+            ( // axial distance (turbine axis), height, diameter
+                (-0.14 -0.82 0.09)
+                (-0.14 -0.66 0.08)
+                (-0.14 -0.42 0.06)
+                (-0.14  0.00 0.05)
+            );
+        }
+
+        hub
+        {
+            nElements   1;
+            elementProfiles (cylinder);
+            elementData
+            ( // axial distance, height, diameter
+                (0 0.09 0.09)
+                (0 -0.09 0.09)
+            );
+        }
+
+        profileData
+        {
+            S826
+            {
+                data (#include "../../resources/foilData/S826_1e5_Ostavan");
+            }
+            cylinder
+            {
+                data ((-180 0 1.1)(180 0 1.1));
+            }
+        }
+    }
+}
+
+// ************************************************************************* //

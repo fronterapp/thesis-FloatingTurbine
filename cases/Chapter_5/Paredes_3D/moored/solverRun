@@ -1,0 +1,15 @@
+#!/bin/bash
+
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+nProc=$(getNumberOfProcessors)
+
+# Set solver name
+
+solver="mpirun --oversubscribe -np $nProc waveDyMFoam -parallel"
+
+# Run the solver
+runApplication $solver
+mv log.mpirun log.waveDyMFoam

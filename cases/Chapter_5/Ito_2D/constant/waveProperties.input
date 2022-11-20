@@ -1,0 +1,70 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.5                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      environmentalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//User-defined parameters
+#include "../myVars" //Include global variables
+
+// Start wavesProperties.input
+seaLevel	#calc "-$y0";
+seaLevelAsReference true;
+
+// A list of the relaxation zones in the simulation. The parameters are given
+// in <name>Coeffs below.
+relaxationNames (inlet outlet);
+
+initializationName inlet;
+
+inletCoeffs
+{
+    waveType    potentialCurrent; // Current which is uniform over the depth
+    U           (0 0 0);
+    Tsoft       0.1;
+
+    relaxationZone
+    {
+        relaxationScheme Spatial;
+        relaxationShape  Rectangular;
+        beachType        Empty;    
+
+        relaxType   INLET;
+        startX      (#calc "-$domain_length" #calc "-$water_depth" $zmin);
+        endX        (#calc "-$tank_length" $domain_height  $zmax);
+        orientation      (1.0 0.0 0.0);
+    }
+};
+
+outletCoeffs
+{
+    waveType    potentialCurrent; // Current which is uniform over the depth
+    U           (0 0 0);
+    Tsoft       0.1;
+
+    relaxationZone
+    {
+        relaxationScheme Spatial;
+        relaxationShape  Rectangular;
+        beachType        Empty;    
+
+        relaxType   OUTLET;
+        startX      ($tank_length #calc "-$water_depth" $zmin);
+        endX        ($domain_length $domain_height  $zmax);
+        orientation      (1.0 0.0 0.0);
+    }
+};
+
+
+
+// ************************************************************************* //

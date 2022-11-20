@@ -1,0 +1,102 @@
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// This file is used to define global variables//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//TURBUNE GEOMETRY
+hub_h		90; // Hub height
+hub_x		-5.0; // Turbine overhang
+D 			126.0; // Rotor diameter
+R 			#calc "$D/2"; //Rotor radii
+span		61.5; // Blade length
+chord		3.4; // Mean chord
+
+turb_mass	697460.0; // Turbine (all) mass
+turb_comx	-0.2;
+turb_comy	0.0;
+turb_comz	64.0;
+
+//Floater properties
+BL_thick		0.2; // BL thickness 
+float_width		74.0; // Overall floater width
+plat_mass		1.3473E+7;
+plat_comx		0.0;
+plat_comz		-13.46;
+surge_offset	23.0;
+
+plat_Ixx		6.827E+9;
+plat_Iyy		6.827E+9;
+plat_Izz		1.226E+10;
+plat_orientation	(1 0 0 0 1 0 0 0 1);
+
+// Platform + turbine properties
+total_mass	#calc "$turb_mass + $plat_mass";
+total_comx	#calc "($turb_mass*$turb_comx + $plat_mass*$plat_comx)/$total_mass";
+total_comz	#calc "($turb_mass*$turb_comz + $plat_mass*$plat_comz)/$total_mass";
+
+//FLOWFIELD
+Ux				9; // Freestream
+I 				0.02; //Turbulence intensity
+TSR				7.5; // Tip-speed ratio					
+rot_period		#calc "2*M_PI*$R/($Ux*$TSR)"; // Blade rotation period	
+
+//WATER AND WAVES
+water_depth 	150.0;
+wave_period		8.0;
+wave_height		4.0;
+wave_length     99.9238; // Compute (non-linear eq, use MATLAB)
+
+//WIND SHEAR - LOG PROFILE
+U_ref			$Ux; //Hub height vel
+z_ref			$hub_h; //Hub height
+z_0				0.5;//0.00609; // Surface roughness length	
+z_ground		#calc "4.0*$wave_height"; //Ground height
+
+//RELAXATION ZONES
+in_len		#calc "1.5*$D";
+out_len		#calc "4.5*$D";
+sim_len		#calc "2.0*$D"; // Free simulation domain
+
+// Domain properties
+length 		#calc "$in_len + $out_len + $sim_len";
+air_h		#calc "$hub_h+2*$D"; // Air height (from MSL)
+width		#calc "4*$D"; // Domain width
+height 		#calc "$air_h + $water_depth";
+size_0		6.4;//3.2; // Element size to use for refinement level zero
+size_x		#calc "$size_0 * sqrt(3.0)"; 
+
+// SOLVER CONTROL
+CFLmax_noRotor	0.75;
+dtmax 		#calc "($CFLmax_noRotor * $size_0/4)/($Ux * $TSR)";
+CFLmax 		0.4;//#calc "$CFLmax_noRotor/sqrt(1.0+2.25*pow($TSR,2))";
+dt0			0.01;//#calc "$dtmax/4.0";
+t_final		#calc "40*$wave_period";
+
+// Domain sizes
+xmin #calc "-($in_len + $sim_len/2)";
+xmax #calc "($out_len + $sim_len/2)";
+
+ymin #calc "-$width/2";
+ymax #calc "$width/2";
+
+zmin #calc "-$water_depth";
+zmax $air_h;
+
+
+// Blockmesh zones
+// Zones 1 and 3 are gradeed towards the boundary
+// Zone 2 has uniform grading and aspect ratio
+
+// X direction (length)
+l1 #calc "1.25*$D"; //Upstream
+l2 #calc "3.5*$D"; // Uniform cell grading
+l3 #calc "3.25*$D"; //Downstream
+
+// Y direction (width)
+w2 #calc "$width/2"; //Uniform cell grading
+w1 #calc "($width-$w2)/2"; // Sides
+w3 $w1; // Sides
+
+// Z direction (heigth)
+h2 #calc "$water_depth/2.0 + 0.8*$air_h"; //+ 1.05*($hub_h + $R)"; //Uniform cell grading
+h1 #calc "$water_depth/2.0"; 
+h3 #calc "$height - $h1 - $h2"; 

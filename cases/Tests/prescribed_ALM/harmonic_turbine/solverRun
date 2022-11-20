@@ -1,0 +1,27 @@
+#!/bin/bash
+
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Prepare for parallelisation
+runApplication decomposePar
+
+# Set application name
+application="mpirun --oversubscribe -np 16 pimpleFoam -parallel"
+
+# Renumber meshto get a more diagonal system
+# runApplication $renum
+
+# Run the application
+runApplication $application
+
+# Recontruct case
+runApplication reconstructPar
+
+# Reconstruct logs
+runApplication foamLog log.mpirun
+# Compute Q criteria
+runApplication postProcess -func Q
+# Post-process turbine geo
+./ALgeometry.sh

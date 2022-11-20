@@ -1,0 +1,45 @@
+// Logarithmic profile condition
+
+internalField #codeStream
+{
+	codeInclude
+	#{
+		#include "fvCFD.H"
+	#};
+
+	codeOptions
+	#{
+		-I$(LIB_SRC)/finiteVolume/lnInclude \
+		-I$(LIB_SRC)/meshTools/lnInclude
+	#};
+
+	codeLibs
+	#{
+		-lmeshTools \
+		-lfiniteVolume
+	#};
+
+	code
+	#{
+		const IOdictionary& d = static_cast<const IOdictionary&>(dict);
+		const fvMesh& mesh = refCast<const fvMesh>(d.db());
+		vectorField U(mesh.nCells(), vector(0., 0., 0.));
+
+		scalar U_h = 0.0; //Height-varying velocity
+
+		forAll(U, i)
+		{
+			const scalar z = mesh.C()[i][2];
+			if (z-$z_ground>$z_0) // Above ground height
+			{	
+				U_h = $U_ref * log((z-$z_ground)/$z_0)/log(($z_ref-$z_ground)/$z_0); //Log profile
+				U[i] = vector(U_h, 0., 0.);	
+			} 
+			else U[i] = vector(0., 0., 0.);	 
+		};
+
+		U.writeEntry("",os);
+
+	#};
+
+};

@@ -1,0 +1,55 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      setExprFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+expressions
+(
+    U
+    {
+        field       U;
+        dimensions  [0 1 -1 0 0 0 0];
+
+     // constants
+     // {
+     // }
+
+      variables
+      (
+        "U_ref = 9.0"
+        "z_ground = 16.0"
+        "z_0 = 0.5"
+        "z_ref = 90.0"
+      );
+
+        condition
+        #{
+            (pos().z() - z_ground > z_0)
+        #};
+
+        expression
+        #{
+            vector
+            (
+                U_ref * log((pos().z()-z_ground)/z_0)/log((z_ref-z_ground)/z_0), //Log profile
+                // There is currently a bug in using log inside setExprField (https://develop.openfoam.com/Development/openfoam/-/issues/1889)
+                // Instead of running 'setExprField', do 'FOAM_SIGFPE=false setExprFields'
+                0.0,
+                0.0
+            )
+        #};
+    }
+);
+
+// ************************************************************************* //

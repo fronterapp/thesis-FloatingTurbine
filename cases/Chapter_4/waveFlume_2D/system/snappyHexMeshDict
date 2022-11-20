@@ -1,0 +1,173 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//#includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+#include "../myVars" //Include global variables
+
+castellatedMesh on;
+snap            off;
+addLayers       off;
+
+geometry
+{
+    FS_box
+    {
+        type    searchableBox;
+        min     (0 #calc "-$wave_height" 0);
+        max     (#calc "$Lg+$Lp+$La" #calc "$wave_height" 0.1);
+    }
+
+}
+
+castellatedMeshControls
+{
+    maxLocalCells 1000000; // max number of cells per processor during refinement
+    maxGlobalCells 2000000; // overall cell limit during refinement, before removal
+    minRefinementCells 0; // cells to be refined must be greater than this value
+    nCellsBetweenLevels 2; // number of buffer layers of cells between successive levels of refinement, typically 3
+    locationInMesh (1e-05 1e-05 1e-05); //location vector inside the region to be meshed
+    resolveFeatureAngle 30;
+
+    features
+    (
+      // allows explicit feature edge refinement and a level is chosen for any cell intersected by its edges
+    );
+
+    refinementSurfaces
+    {
+        // surface based refinement
+        // Every surface is specified with two levels
+        // The first level is the minimum level that every cell intersecting the surface gets refined up to
+        // The second level is the maximum level of refinement.
+    }
+
+    refinementRegions
+    {
+        FS_box
+        {
+            mode inside;
+            levels ((1e-5 0));
+
+            levelIncrement  (0 1 ($ref_level $ref_level 0)); // in cells with refinement levels 0-1, perform refinements in XYZ = 3, 3, 0 (0 in z because it's 2D)
+        }
+    }
+
+    allowFreeStandingZoneFaces  false;
+
+    // Optional: switch off topological test for cells to-be-squashed
+    //           and use geometric test instead
+    useTopologicalSnapDetection false;
+}
+
+snapControls
+{
+     nSmoothPatch 3;     
+     tolerance 1.0;     
+     nSolveIter 300;     
+     nRelaxIter 5;         
+     nFeatureSnapIter 10;         
+     implicitFeatureSnap false;         
+     explicitFeatureSnap true;         
+     multiRegionFeatureSnap true; 
+}
+
+addLayersControls
+{
+  relativeSizes true;     
+  layers 
+  {
+  } 
+
+  expansionRatio 1.005;      
+  finalLayerThickness 0.3;     
+  minThickness 0.25;     
+  nGrow 0;     
+  featureAngle 30;     
+  nRelaxIter 5;     
+  nSmoothSurfaceNormals 1;     
+  nSmoothNormals 3;     
+  nSmoothThickness 10;     
+  maxFaceThicknessRatio 0.5;     
+  maxThicknessToMedialRatio 0.3;     
+  minMedianAxisAngle 90;     
+  nBufferCellsNoExtrude 0; 
+  nLayerIter 50; 
+  nRelaxedIter 20; 
+}
+
+meshQualityControls
+{
+    //- Maximum non-orthogonality allowed. Set to 180 to disable.
+    maxNonOrtho 180;
+    
+    //- Max skewness allowed. Set to <0 to disable.
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+    
+    //- Max concaveness allowed. Is angle (in degrees) below which concavity
+    //  is allowed. 0 is straight face, <0 would be convex face.
+    //  Set to 180 to disable.
+    maxConcave 80;
+    
+    //- Minimum pyramid volume. Is absolute volume of cell pyramid.
+    //  Set to a sensible fraction of the smallest cell volume expected.
+    //  Set to very negative number (e.g. -1E30) to disable.
+    minVol 1e-16;
+    
+    //- Minimum quality of the tet formed by the face-centre
+    //  and variable base point minimum decomposition triangles and
+    //  the cell centre. Set to very negative number (e.g. -1E30) to
+    //  disable.
+    //     <0 = inside out tet,
+    //      0 = flat tet
+    //      1 = regular tet
+    minTetQuality -1e+20;
+    
+    //- Minimum face area. Set to <0 to disable.
+    minArea 1e-13;
+    
+    //- Minimum face twist. Set to <-1 to disable. dot product of face normal
+    // and face centre triangles normal
+    minTwist 0.02;
+    
+    //- Minimum normalised cell determinant. This is the determinant of all
+    //  the areas of internal faces. It is a measure of how much of the
+    //  outside area of the cell is to other cells. The idea is that if all
+    //  outside faces of the cell are 'floating' (zeroGradient) the
+    //  'fixedness' of the cell is determined by the area of the internal faces.
+    //  1 = hex, <= 0 = folded or flattened illegal cell
+    minDeterminant 0.001;
+    
+    //- Relative position of face in relation to cell centres (0.5 for orthogonal
+    //  mesh) (0 -> 0.5)
+    minFaceWeight 0.02;
+    
+    //- Volume ratio of neighbouring cells (0 -> 1)
+    minVolRatio 0.01;
+    
+    //- Per triangle normal compared to average normal. Like face twist
+    //  but now per (face-centre decomposition) triangle. Must be >0 for Fluent
+    //  compatibility
+    minTriangleTwist -1;
+
+    errorReduction 0.9; //amount to scale back displacement at error points 
+    nSmoothScale 4; // number of error distribution iterations (typically 4)
+}
+
+
+mergeTolerance 1e-6;
+
+// ************************************************************************* //

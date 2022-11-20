@@ -1,0 +1,47 @@
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// This file is used to define sampling options//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+crosswind
+{
+	type sets;
+	libs ("libsampling.so");
+	writeControl timeStep;
+	outputInterval 250;
+	interpolationScheme cellPoint;
+	setFormat raw;
+	sets
+	(
+		data
+		{
+			type uniform;
+			axis y;
+			start (#calc "2.3*$D" #calc "-1.6*$D" $hub_h);
+			end (#calc "2.3*$D" #calc "1.6*$D" $hub_h);
+			nPoints 50;
+		}
+	);
+	fields (U p);
+}
+
+alongwind
+{
+	type sets;
+	libs ("libsampling.so");
+	writeControl timeStep;
+	outputInterval 250;
+	interpolationScheme cellPoint;
+	setFormat raw;
+	sets
+	(
+		data
+		{
+			type uniform;
+			axis x;
+			start (#calc "0.9*$D" 0.9 $hub_h);
+			end (#calc "2.3*$D" 0.9 $hub_h);
+			nPoints 50;
+		}
+	);
+	fields (U p);
+}

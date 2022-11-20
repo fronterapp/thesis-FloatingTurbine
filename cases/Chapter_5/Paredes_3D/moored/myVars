@@ -1,0 +1,109 @@
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// This file is used to define global variables//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+cyl_R             0.2575; //Cylinder radii
+cyl_L             0.401; //Cylinder height
+cyl_draft		      -0.172; //Cylinder draft
+cyl_KG			      0.0758; //Distance from base to CoG
+
+relaxation_length 3.0;	// Length of the relaxation zones
+water_depth       0.9; // Water depth
+tank_length	      6.0; // Free computational domain length
+domain_length     #calc "$tank_length+2*$relaxation_length"; //Tank + relaxation zones
+domain_width	    2.5;
+domain_height     $water_depth;
+
+cyl_angle         #calc "11.353*M_PI/180";//initial inclination angle of the cylinder, in radians
+cyl_com			  	  #calc "$cyl_draft+$cyl_KG";//-0.0932; // z position of the centre of mass
+cyl_down			    $cyl_KG; // Distance from cog to cylinder base
+cyl_up				    #calc "$cyl_L-$cyl_down"; // Distance from cog to cylinder top
+cyl_center			  #calc "$cyl_draft + $cyl_L/2";
+
+// Initial orientation
+cyl_orientation		(#calc "cos($cyl_angle)" 0 #calc "sin($cyl_angle)" 0 1 0 #calc "-sin($cyl_angle)" 0 #calc "cos($cyl_angle)");
+
+// For blockmesh
+
+x1  #calc "-$domain_length/2";
+x2  #calc "$domain_length/2";
+
+y1  #calc "-$domain_width";
+y2  $domain_width;
+
+z1  #calc "-$water_depth";
+z2  $domain_height;
+
+// Moorings
+moor_d0			0.015; // Distance between cylinder and attachments (radial direction)
+moor_p1x		#calc "$cyl_R + $moor_d0";
+moor_p1			($moor_p1x 0 0);
+moor_p2			(#calc "-0.5*$moor_p1x" #calc "0.5*sqrt(3.0)*$moor_p1x" 0);
+moor_p3			(#calc "-0.5*$moor_p1x" #calc "-0.5*sqrt(3.0)*$moor_p1x" 0);
+
+moor_P1 #codeStream
+    { 
+      codeInclude
+      #{
+        #include "fvCFD.H"
+      #};
+      codeOptions
+      #{
+        -I$(LIB_SRC)/finiteVolume/lnInclude \
+        -I$(LIB_SRC)/meshTools/lnInclude
+      #};
+      codeLibs
+      #{
+        -lmeshTools \
+        -lfiniteVolume
+      #};
+      code
+      #{
+        vector point = tensor(cos($cyl_angle),0,sin($cyl_angle),0,1,0,-sin($cyl_angle),0,cos($cyl_angle)) & vector($moor_p1x,0,0);
+        os  << point;
+      #};
+     };
+
+moor_P2 #codeStream 
+    {
+      codeInclude
+      #{
+        #include "fvCFD.H"
+      #};
+      codeOptions
+      #{
+        -I$(LIB_SRC)/finiteVolume/lnInclude \
+        -I$(LIB_SRC)/meshTools/lnInclude
+      #};
+      codeLibs
+      #{
+        -lmeshTools \
+        -lfiniteVolume
+      #};
+      code
+      #{
+        vector point = tensor(cos($cyl_angle),0,sin($cyl_angle),0,1,0,-sin($cyl_angle),0,cos($cyl_angle)) & vector(-0.5*$moor_p1x,0.5*sqrt(3.0)*$moor_p1x,0);
+        os  << point;      
+      #};
+     };
+
+moor_P3 #codeStream 
+    {
+      codeInclude
+      #{
+        #include "fvCFD.H"
+      #};
+      codeOptions
+      #{
+        -I$(LIB_SRC)/finiteVolume/lnInclude \
+        -I$(LIB_SRC)/meshTools/lnInclude
+      #};
+      codeLibs
+      #{
+        -lmeshTools \
+        -lfiniteVolume
+      #};
+      code
+      #{
+        vector point = tensor(cos($cyl_angle),0,sin($cyl_angle),0,1,0,-sin($cyl_angle),0,cos($cyl_angle)) & vector(-0.5*$moor_p1x,-0.5*sqrt(3.0)*$moor_p1x,0);
+        os  << point;      #};
+     };

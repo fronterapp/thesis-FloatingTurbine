@@ -1,0 +1,57 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.5                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      motionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "../myVars" //Include global variables
+
+dynamicFvMesh dynamicMotionSolverFvMesh;
+motionSolverLibs 
+(
+  "libfvMotionSolvers.so"
+  "libfloatingSixDoFRigidBodyMotion.so"
+);
+solver sixDoFRigidBodyMotion;
+diffusivity     quadratic inverseDistance ( cylinder );
+ 
+ sixDoFRigidBodyMotionCoeffs
+ {
+     patches         ( cylinder );
+     innerDistance   0.05;
+     outerDistance   0.8;
+     centreOfMass    (0    0   -0.0932);
+     mass            35.85;
+     g               (0 0 -9.8065);
+     Ix              0.95;
+     Iy              $Ix;
+     Iz              #calc "0.5*$mass*pow($cyl_R,2)";
+     momentOfInertia ( $Ix $Iy $Iz);
+     velocity        ( 0    0   0 );
+     //angularMomentum (0    0   0); //units [kg-m^2*deg/s]
+     orientation (#calc "cos($cyl_angle)" 0 #calc "sin($cyl_angle)" 0 1 0 #calc "-sin($cyl_angle)" 0 #calc "cos($cyl_angle)");//(0.994759 -0.102245 0 0.102245 0.994759 0 0 0 1); //Rotation tensor (ZYX convention?), see http://planning.cs.uiuc.edu/node102.html
+     
+     //rhoName         rhoInf; //For incompressible, in case density is uniform
+     //rhoInf          1024.81;
+
+     accelerationRelaxation 1.0;
+     accelerationDamping 1.0;
+     report          on;
+     reportToFile    on;
+     solver
+     {
+         type            Newmark;
+     }
+
+ }
+
+// ************************************************************************* //

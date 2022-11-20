@@ -1,0 +1,64 @@
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// This file is used to define global variables//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//TURBINE GEOMETRY
+hub_h		90; // Hub height
+hub_x		-5.0; // Turbine overhang
+D 			126.0; // Rotor diameter
+R 			#calc "$D/2"; //Rotor radii
+span		61.5; // Blade length
+chord		3.4; // Mean chord
+
+//DOMAIN DEFINITION
+height		#calc "$hub_h+2*$D";
+width    	#calc "4*$D";
+size_0		12.8; //#calc "$D/15.75"; // Element size to use for refinement level zero
+size_x		#calc "$size_0 * sqrt(3.0)"; 
+
+//FLOWFIELD
+Ux				9.0; // Freestream
+I 				0.02; //Turbulence intensity
+TSR				7.5; // Tip-speed ratio					
+period			#calc "2*M_PI*$R/($Ux*$TSR)"; // Blade rotation period
+
+//WIND SHEAR - LOG PROFILE
+U_ref			$Ux; //Hub height vel
+z_ref			$hub_h; //Hub height
+z_0				0.5;//0.00609; // Surface roughness length	
+z_ground		16.0; //Ground height
+
+// SOLVER CONTROL
+CFLmax_noRotor	0.75;
+dtmax 		#calc "($CFLmax_noRotor * $size_0/8)/($Ux * $TSR)";
+CFLmax 		#calc "$CFLmax_noRotor/sqrt(1.0+2.25*pow($TSR,2))";
+dt0			0.01;//#calc "$dtmax/2";
+t_final		#calc "11*$period";
+
+// Domain sizes
+xmin #calc "-2.5*$D";
+xmax #calc "5.5*$D";
+
+ymin #calc "-$width/2";
+ymax #calc "$width/2";
+
+zmin 0.0;
+zmax $height;
+
+length #calc "$xmax-($xmin)";
+
+// Blockmesh zones
+// X direction (length)
+l1 #calc "1.25*$D"; //Upstream
+l2 #calc "3.5*$D"; // Uniform cell grading
+l3 #calc "3.25*$D"; //Downstream
+
+// Y direction (width)
+w2 #calc "$width/2"; //Uniform cell grading
+w1 #calc "($width-$w2)/2"; // Sides
+w3 $w1; // Sides
+
+// Z direction (heigth)
+h2 #calc "1.5*$D"; //Uniform cell grading
+h1 0.0; 
+h3 #calc "$height - $h1 - $h2"; 

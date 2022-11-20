@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+restore0Dir
+
+#Run blockMesh
+runApplication blockMesh
+
+#Run snappy
+runApplication snappyHexMesh -overwrite
+
+#Correct BCs
+sed -i 's/symmetry/empty/g' 0/U
+sed -i 's/symmetry/empty/g' 0/p_rgh
+sed -i 's/symmetry/empty/g' 0/alpha.water
+sed -i 's/symmetry/empty/g' constant/polyMesh/boundary
+
+cp -fr 0/polyMesh/points constant/polyMesh/points
+
+# Create the wave probes
+runApplication waveGaugesNProbes
+
+# Compute the wave parameters
+runApplication setWaveParameters
+
+# Create the wave probes
+runApplication waveGaugesNProbes
+
+# Define relaxation zones (only needed if you want to visualize the resulting layout)
+runApplication relaxationZoneLayout
+
+# Set the alpha field according to wave theory
+runApplication setWaveField
+
+# Set the alpha field according to setFieldsDict
+#runApplication setFields

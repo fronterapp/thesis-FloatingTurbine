@@ -1,0 +1,268 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//#includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+#include "../myVars" //Include global variables
+
+castellatedMesh on;
+snap            on;
+addLayers       on;
+
+geometry
+{
+    floater.stl 
+    {
+        type triSurfaceMesh; 
+        name floater;
+    }
+
+    float_sphere
+    {
+    type            searchableSphere;
+    centre          (0 0 -4);
+    radius          #calc "1.1*45.78";
+    }
+
+
+
+    FS_3 // Free-surface
+    {
+        type searchableBox;
+        min ($xmin  #calc "0.8*$ymin" #calc "-1.0*$wave_height");
+        max (#calc "$xmax - $out_len"  #calc "0.8*$ymax" #calc "1.2*$wave_height"); 
+    }
+
+    FS_2
+    {
+        type    searchableBox;
+        min     (#calc "$xmin + 0.8*$in_len"  #calc "$ymin" #calc "-4*$wave_height");
+        max     (#calc "$xmax - 0.8*$out_len"  #calc "$ymax" #calc "4*$wave_height" );
+    }
+
+    FS_1
+    {
+        type    searchableBox;
+        min     ($xmin  #calc "$ymin" #calc "-4*$wave_height");
+        max     ($xmax  #calc "$ymax" #calc "6*$wave_height" );
+    }
+
+}
+
+// https://www.openfoam.com/documentation/guides/latest/doc/guide-meshing-snappyhexmesh-castellation.html
+castellatedMeshControls
+{
+    maxLocalCells 10000000; // max number of cells per processor during refinement
+    maxGlobalCells 10000000; // overall cell limit during refinement, before removal
+    minRefinementCells 0; // cells to be refined must be greater than this value
+    nCellsBetweenLevels 2; // number of buffer layers of cells between successive levels of refinement, typically 3
+    locationInMesh (0.011112 0.123456 11.11025514); //location vector inside the region to be meshed. Use weird numbers to avoid falling just at an edge. 
+    resolveFeatureAngle 30;
+
+    features
+    (
+      // allows explicit feature edge refinement and a level is chosen for any cell intersected by its edges
+
+    );
+
+    refinementSurfaces
+    {
+        // surface based refinement
+        // Every surface is specified with two levels
+        // The first level is the minimum level that every cell intersecting the surface gets refined up to
+        // The second level is the maximum level of refinement.
+        floater
+        {
+            level (3 3);
+        }
+
+        patchInfo
+        {
+          type wall;
+ 
+          // Optional group
+          // inGroups (meshedWalls);
+        }
+        //perpendicularAngle 10;
+    }
+
+    refinementRegions
+    {
+        FS_3
+        {
+            mode inside;
+            levels ((1e-5 3)); //First entry here is distance, which will be ignored unless mode = distance
+        }
+
+        float_sphere
+        {
+            mode inside;
+            levels ((1e-5 2)); //First entry here is distance, which will be ignored unless mode = distance
+        }
+
+        FS_2
+        {
+            mode inside;
+            levels ((1e-5 2)); //First entry here is distance, which will be ignored unless mode = distance
+        }
+
+        FS_1
+        {
+            mode inside;
+            levels ((1e-5 1)); //First entry here is distance, which will be ignored unless mode = distance
+        }
+        
+    }
+
+    allowFreeStandingZoneFaces  false;
+
+    // Optional: switch off topological test for cells to-be-squashed
+    //           and use geometric test instead
+    useTopologicalSnapDetection false;
+}
+
+snapControls
+{
+     nSmoothPatch 3; //Number of patch smoothing iterations before finding correspondence to surface
+     tolerance 2.0;     
+     nSolveIter 30;// Number of mesh displacement relaxation. The higher the value the better the body fitted mesh. Default is 30. Increase to 300 for better mesh quality, but increased time. 
+     nRelaxIter 5; //Maximum number of snapping relaxation iterations. Increase this value to improve the quality of the body fitted mesh.        
+     nFeatureSnapIter 10; // 10; //Number of feature edge snapping iterations. Increase this value to improve the quality of the edge features.     
+
+     implicitFeatureSnap true; // Turn to true when the body you want to snap is a geometric entity (sphere, cylinder, etc), not a file stl        
+     explicitFeatureSnap false; // If true, will use the file defined in castellatedMeshControls::features         
+     multiRegionFeatureSnap false; 
+}
+
+addLayersControls
+{
+  relativeSizes true; // if true, BL meshing is done relative to the size of the cells next to the surface. It is quite difficult to set a desired thickness of the first layer.
+  // When the option relativeSizes is true and in order to have a uniform boundary layer, we need to have a uniform surface refinement.
+  layers 
+  {
+      floater
+      {
+          nSurfaceLayers    4;
+      }
+  } 
+
+  expansionRatio 1.05;      
+  finalLayerThickness $BL_thick;     
+  minThickness 0.25;     
+  nGrow 0;     
+  featureAngle 150;  // Increase this value to avoid BL collapsing   
+  nRelaxIter 5;     
+  nSmoothSurfaceNormals 1;     
+  nSmoothNormals 3;     
+  nSmoothThickness 10;     
+  maxFaceThicknessRatio 0.5;     
+  maxThicknessToMedialRatio 0.3;     
+  minMedianAxisAngle 90;     
+  nBufferCellsNoExtrude 0; 
+  nLayerIter 50; 
+  nRelaxedIter 20; 
+}
+
+meshQualityControls
+{
+    //- Maximum non-orthogonality angle allowed. Set to 180 to disable.
+    maxNonOrtho 75;
+    
+    //- Max skewness allowed. Set to <0 to disable.
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+    
+    //- Max concaveness allowed. Is angle (in degrees) below which concavity
+    //  is allowed. 0 is straight face, <0 would be convex face.
+    //  Set to 180 to disable.
+    maxConcave 80;
+    
+    //- Minimum pyramid volume. Is absolute volume of cell pyramid.
+    //  Set to a sensible fraction of the smallest cell volume expected.
+    //  Set to very negative number (e.g. -1E30) to disable.
+    minVol 1e-13;
+    
+    //- Minimum quality of the tet formed by the face-centre
+    //  and variable base point minimum decomposition triangles and
+    //  the cell centre. Set to very negative number (e.g. -1E30) to
+    //  disable.
+    //     <0 = inside out tet,
+    //      0 = flat tet
+    //      1 = regular tet
+    minTetQuality -1e+20;
+    
+    //- Minimum face area. Set to <0 to disable.
+    minArea 1e-13;
+    
+    //- Minimum face twist. Set to <-1 to disable. dot product of face normal
+    // and face centre triangles normal
+    minTwist 0.02;
+    
+    //- Minimum normalised cell determinant. This is the determinant of all
+    //  the areas of internal faces. It is a measure of how much of the
+    //  outside area of the cell is to other cells. The idea is that if all
+    //  outside faces of the cell are 'floating' (zeroGradient) the
+    //  'fixedness' of the cell is determined by the area of the internal faces.
+    //  1 = hex, <= 0 = folded or flattened illegal cell
+    minDeterminant 0.001;
+    
+    //- Relative position of face in relation to cell centres (0.5 for orthogonal
+    //  mesh) (0 -> 0.5)
+    minFaceWeight 0.05;
+    
+    //- Volume ratio of neighbouring cells (0 -> 1)
+    minVolRatio 0.01;
+    
+    //- Per triangle normal compared to average normal. Like face twist
+    //  but now per (face-centre decomposition) triangle. Must be >0 for Fluent
+    //  compatibility
+    minTriangleTwist -1;
+
+    errorReduction 0.75; //amount to scale back displacement at error points 
+    nSmoothScale 4; // number of error distribution iterations (typically 4)
+    minFlatness 0.5;
+}
+
+
+mergeTolerance 1e-6;
+
+/*
+debugFlags
+(
+    // write intermediate meshes
+    mesh
+    // write current mesh intersections as .obj files
+    intersections
+    // write information about explicit feature edge
+    // refinement
+    featureSeeds
+    // write attraction as .obj files
+    attraction
+    // write information about layers
+    layerInfo
+);
+writeFlags
+(
+    // write volScalarField with cellLevel for
+    // postprocessing
+    scalarLevels
+    // write cellSets, faceSets of faces in layer
+    layerSets
+    // write volScalarField for layer coverage
+    layerFields
+);
+*/
+
+// ************************************************************************* //

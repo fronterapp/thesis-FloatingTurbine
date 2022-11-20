@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Recontruct case
+runApplication reconstructPar
+
+# Reconstruct logs
+runApplication foamLog log.mpirun
+
+#Extract rigid body data
+./RBextract.sh

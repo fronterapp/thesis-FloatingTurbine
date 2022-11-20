@@ -1,0 +1,61 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  3.0.x                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      topoSetDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "../myVars" //Include global variables
+
+actions
+(
+    {
+        name 	turbine;
+        type	cellSet;
+        action	new;
+        source	cylinderToCell;
+        sourceInfo
+        {
+            type cylinder; 
+            p1 (#calc "$hub_x-0.15*$D" 0 $hub_h);
+            p2 (#calc "$hub_x+0.15*$D" 0 $hub_h);
+            radius #calc "1.25*$D/2"; 
+        }
+    }
+/*   
+    {
+        name 	turbine; //tower
+        type	cellSet;
+        action	add;
+        source	cylinderToCell;
+        sourceInfo
+        {
+            type cylinder; 
+            p1 (0 0 $hub_h);
+            p2 (0 0 0);
+            radius 1;
+        }
+    }
+*/   
+    {
+        name    turbine;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+        sourceInfo
+        {
+            set turbine;
+        }
+    }
+);
+
+// ************************************************************************* //

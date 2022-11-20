@@ -1,0 +1,25 @@
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// This file is used to define sampling options//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+crosswind
+{
+	type sets;
+	libs ("libsampling.so");
+	writeControl timeStep;
+	outputInterval 250;
+	interpolationScheme cellPoint;
+	setFormat raw;
+	sets
+	(
+		data
+		{
+			type uniform;
+			axis y;
+			start (#calc "$hub_x + $D" #calc "-1.5*$D" $hub_h);
+			end (#calc "$hub_x + $D" #calc "1.5*$D" $hub_h);
+			nPoints 50;
+		}
+	);
+	fields (U p);
+}

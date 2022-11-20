@@ -1,0 +1,91 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.5                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      motionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "../myVars" //Include global variables
+
+dynamicFvMesh dynamicMotionSolverFvMesh;
+motionSolverLibs 
+(
+  "libfvMotionSolvers.so"
+  "libfloatingSixDoFRigidBodyMotion.so"
+);
+solver sixDoFRigidBodyMotion;
+diffusivity     quadratic inverseDistance ( cylinder );
+ 
+ sixDoFRigidBodyMotionCoeffs
+ {
+     patches         ( cylinder );
+     innerDistance   0.05;
+     outerDistance   0.8;
+     centreOfMass    (0    0   $cyl_com);
+     mass            35.85;
+     g               ( 0 0 -9.8065);
+     Ix              0.90;
+     Iy              $Ix;
+     Iz              #calc "0.5*$mass*pow($cyl_R,2)";
+     momentOfInertia ( $Ix $Iy $Iz);
+     velocity        ( 0    0   0 );
+     //angularMomentum (0    0   0); //units [kg-m^2*deg/s]
+     orientation     $cyl_orientation;  //Rotation tensor (ZYX convention?), see http://planning.cs.uiuc.edu/node102.html
+     
+     //rhoName         rhoInf; //For incompressible, in case density is uniform
+     //rhoInf          1024.81;
+
+     accelerationRelaxation 1.0;
+     accelerationDamping 1.0;
+     report          on;
+     reportToFile    on;
+     solver
+     {
+         type            Newmark;
+     }
+
+     restraints
+     {
+      catenaryLine1
+      {
+        sixDoFRigidBodyMotionRestraint mooringLine;
+        anchor              (6.66 0 $z1); // Anchor point, where the line is attached to an immovable object
+        refAttachmentPt     $moor_P1; // Reference point of attachment to the solid bodyy
+        massPerLength       0.1447; // Mass per unit length
+        lineLength          6.95; // Length of the mooring line
+        gravityVector       $g; // Gravity vector
+        thickness           0.1; // Line thickness, used only for visualization purposes
+      }
+      catenaryLine2
+      {
+        sixDoFRigidBodyMotionRestraint mooringLine;
+        anchor              (-3.33 5.7677 $z1); // Anchor point, where the line is attached to an immovable object
+        refAttachmentPt     $moor_P2; // Reference point of attachment to the solid bodyy
+        massPerLength       0.1447; // Mass per unit length
+        lineLength          6.95; // Length of the mooring line
+        gravityVector       $g; // Gravity vector
+        thickness           0.1; // Line thickness, used only for visualization purposes
+      }
+      catenaryLine3
+      {
+        sixDoFRigidBodyMotionRestraint mooringLine;
+        anchor              (-3.33 -5.7677 $z1); // Anchor point, where the line is attached to an immovable object
+        refAttachmentPt     $moor_P3; // Reference point of attachment to the solid bodyy
+        massPerLength       0.1447; // Mass per unit length
+        lineLength          6.95; // Length of the mooring line
+        gravityVector       $g; // Gravity vector
+        thickness           0.1; // Line thickness, used only for visualization purposes
+      }
+     }
+     
+ }
+
+// ************************************************************************* //

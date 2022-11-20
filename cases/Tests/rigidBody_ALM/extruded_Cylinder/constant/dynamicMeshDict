@@ -1,0 +1,98 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.5                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      motionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "../myVars" //Include global variables
+
+dynamicFvMesh dynamicMotionSolverFvMesh;
+motionSolverLibs 
+(
+  "libfvMotionSolvers.so"
+  "libfloatingSixDoFRigidBodyMotion.so"
+);
+solver sixDoFRigidBodyMotion;
+diffusivity     quadratic inverseDistance ( cylinder );
+ 
+ sixDoFRigidBodyMotionCoeffs
+ {
+     patches         ( cylinder );
+     innerDistance   #calc "2.5*$cyl_a";
+     outerDistance   #calc "6*$cyl_a";
+     centreOfMass    (0    0   0);
+     mass            #calc "100000*($zmax-($zmin))*$cyl_a*$cyl_a*3.14159265359"; //Mass of the cylinder SECTION, given a 500 kg/m^3 density
+     g               (0   -9.81   0);
+     Ix              #calc "$mass*(3*$cyl_a*$cyl_a+($zmax-($zmin))*($zmax-($zmin)))/12";
+     Iz              #calc "0.5*$mass*$cyl_a*$cyl_a";
+     momentOfInertia ( $Ix  $Ix $Iz);
+     velocity        ( 0    0   0 );
+     //angularMomentum (0    0   0); //units [kg-m^2*deg/s]
+     //orientation (1 0 0 0 1 0 0 0 1); //Rotation tensor, see http://planning.cs.uiuc.edu/node102.html
+
+     turbineMass     1; //dummy   
+     gravity          -9.81;
+     
+     accelerationRelaxation 1.0;
+     accelerationDamping 1.0;
+     report          on;
+     reportToFile    on;
+     solver
+     {
+         type            Newmark;
+     }
+     constraints
+     {
+        heaveConstraint
+        {
+          sixDoFRigidBodyMotionConstraint   line;
+          direction                         (0 1 0);
+        }
+
+        noRot
+        {
+          sixDoFRigidBodyMotionConstraint   axis;
+          axis                  	(0 0 1);
+          centreOfRotation        (0 0 0);
+        }
+     }
+     
+     restraints
+     {
+      
+      turbineLoad
+      {
+        sixDoFRigidBodyMotionRestraint turbineAL;
+      }
+      
+      turbineWeight
+      {
+        sixDoFRigidBodyMotionRestraint constantLoad;
+        applicationPt   (0 0 0); // Initial CoG
+        movePt          true; // Move CoG with rigid body
+        force           (0 #calc "$turbineMass*$gravity" 0); // Weight
+        torque          (0 0 0); // None                  
+      }
+
+      turbineGyro
+      {
+        sixDoFRigidBodyMotionRestraint gyroscopicMoment;
+        rotationAxis      (1.0 0.0 0.0); // Initial rotation axis (in body frame)
+        angularSpeed      1.0; // Angular speed around the specified axis, in [rad/s]            
+        inertiaMoment     (1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0); //Initial moment of inertia tensor of the rotating body (in body frame)
+      }
+      
+     }
+     
+ }
+
+// ************************************************************************* //

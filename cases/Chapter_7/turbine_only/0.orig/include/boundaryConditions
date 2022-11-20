@@ -1,0 +1,18 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  3.0.x                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+#include "$FOAM_CASE/myVars" //Include global variables
+
+turbulentKE          #calc "1.5*pow($I*$Ux,2)" ; // 2% turbulence 
+
+//https://www.cfd-online.com/Wiki/Turbulence_intensity
+//https://www.openfoam.com/documentation/guides/latest/doc/guide-turbulence-ras-k-epsilon.html
+//https://www.cfd-online.com/Wiki/Turbulence_free-stream_boundary_conditions
+
+turbulentOmega     #calc "sqrt($turbulentKE)/(pow(0.09,0.25)*$chord)"; // Specific dissipation rate, https://www.openfoam.com/documentation/guides/latest/doc/guide-turbulence-ras-k-omega-sst.html
+
+// ************************************************************************* //

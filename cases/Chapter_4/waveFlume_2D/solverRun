@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Set application name
+application="mpirun --oversubscribe -np 16 waveFoam -parallel"
+
+# Prepare for parallelisation
+runApplication decomposePar
+
+# Run the application
+runApplication $application
+
+# Recontruct case
+runApplication reconstructPar
+
+# Reconstruct logs
+runApplication foamLog log.mpirun

@@ -1,0 +1,4 @@
+// Blade element data
+// axialDistance, radius, azimuth, chord, chordMount, twist
+(0.0    0.00357		0.0     0.0135      0.25    0.0)
+(0.0    0.09643		0.0     0.02592585  0.25    0.71674)

@@ -1,0 +1,146 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  3.0.x                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "../myVars" //Include global variables
+
+scale   1;
+
+vertices        
+(
+    ( $xmin $ymin $zmin ) //0
+    ( $xmax $ymin $zmin ) //1
+    ( $xmin $ymax $zmin ) //2
+    ( $xmax $ymax $zmin ) //3
+    ( $xmin $ymin $zmax ) //4
+    ( $xmax $ymin $zmax ) //5
+    ( $xmin $ymax $zmax ) //6
+    ( $xmax $ymax $zmax ) //7                   
+);
+
+Nz     #calc "round(fabs($zmax-($zmin))/$size_0)";
+
+// OVERALL EXPANSION RATIOS
+exp_l1  2.0;
+exp_l3  3.0;
+
+exp_w1  1.7;
+exp_w3  1.7;
+
+// CELL-TO-CELL EXPANSION RATIOS
+// This formulas need expansion ratios > 1
+
+beta_l1 #calc "($l1-$size_0) / ($l1-$size_0*$exp_l1)";
+beta_l3 #calc "($l3-$size_0) / ($l3-$size_0*$exp_l3)";
+beta_w1 #calc "($w1-$size_0) / ($w1-$size_0*$exp_w1)";
+beta_w3 #calc "($w3-$size_0) / ($w3-$size_0*$exp_w3)";
+
+// NUMBER OF CELLS PER REGION 
+// From https://openfoamwiki.net/index.php/Scripts/blockMesh_grading_calculation
+// https://www.cfd-online.com/Forums/openfoam/233981-how-find-expension-ratio-between-2consecutive-cells-planar-abrupt-contraction.html
+// X
+
+Nx_1     #calc "round(abs(1+log($exp_l1)/log($beta_l1)))";
+Nx_3     #calc "round(abs(1+log($exp_l3)/log($beta_l3)))";
+Nx_2     #calc "round($l2/$size_0)"; // Cells in the uniform region
+Nx       #calc "$Nx_1 + $Nx_2 + $Nx_3"; 
+// Y
+Ny_1     #calc "round(abs(1+log($exp_w1)/log($beta_w1)))";
+Ny_3     #calc "round(abs(1+log($exp_w3)/log($beta_w3)))";
+Ny_2     #calc "round($w2/$size_0)"; // Cells in the uniform region 
+Ny       #calc "$Ny_1 + $Ny_2 + $Ny_3"; 
+
+// GRADING BLOCKS DEFINITON //
+// X
+// % of the block lenght
+dist_l1 #calc "$l1/$length";
+dist_l2 #calc "$l2/$length";
+dist_l3 #calc "$l3/$length";
+
+// % of the total cells
+cells_l1 #calc "float($Nx_1)/$Nx";
+cells_l3 #calc "float($Nx_3)/$Nx";
+cells_l2 #calc "1.0-$cells_l1-$cells_l3";
+
+// Y
+// % of the block lenght
+dist_w1 #calc "$w1/$width";
+dist_w2 #calc "$w2/$width";
+dist_w3 #calc "$w3/$width";
+// % of the total cells
+cells_w1 #calc "float($Ny_1)/$Ny";
+cells_w3 #calc "float($Ny_3)/$Ny";
+cells_w2 #calc "1.0-$cells_w1-$cells_w3";
+
+blocks
+(   
+    hex (0 1 3 2 4 5 7 6) ( $Nx $Ny $Nz )
+    //simpleGrading (1 1 1)
+    simpleGrading
+    (
+        (
+            ($dist_l1   $cells_l1   #calc "1/$exp_l1")  // % x-dir, 20% cells, expansion 1/2
+            ($dist_l2   $cells_l2   1) // % x-dir, 60% cells, expansion     
+            ($dist_l3   $cells_l3   $exp_l3) // % x-dir, 20% cells, expansion 2
+        )
+        (
+            ($dist_w1   $cells_w1   #calc "1/$exp_w1")  // % x-dir, 20% cells, expansion 1/1.7
+            ($dist_w2   $cells_w2   1) // % x-dir, 60% cells, expansion     
+            ($dist_w3   $cells_w3   $exp_w3) // % x-dir, 20% cells, expansion 1.7
+        )
+        1   // z-direction expansion ratio
+    )
+);
+
+boundary
+(
+    inlet
+    {
+        type patch;
+        faces
+        (
+            (0 4 6 2)
+        );
+    }
+
+    outlet
+    {
+	   type patch;
+	   faces
+        (
+            (1 5 7 3)
+        );
+    }
+
+    walls
+    {
+	   type wall;
+       faces
+        (
+            (0 1 3 2) //bottom
+            (4 5 7 6) //top
+            (0 1 5 4) //back
+            (2 3 7 6) //front
+        );
+    }
+
+);
+
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

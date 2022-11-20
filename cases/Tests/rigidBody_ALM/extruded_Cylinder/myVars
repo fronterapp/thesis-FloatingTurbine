@@ -1,0 +1,16 @@
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// This file is used to define global variables//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+cyl_a				0.0762; //Cylinder radii, 3 inches
+y0					0; //Initial displacement, 1 inch
+relaxation_length	0;	// Length of the relaxation zones
+water_depth			#calc "1.2192/2"; // 4 feet + initial displacement, since mean water level is at -y0
+tank_length			$water_depth; //4 feet
+domain_length		#calc "$tank_length+2*$relaxation_length"; //4 feet + relaxation zones
+domain_height		#calc $water_depth;
+
+// Front/back locations
+zmin -0.25;
+zmax 0.25;

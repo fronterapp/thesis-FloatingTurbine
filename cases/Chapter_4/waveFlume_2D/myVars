@@ -1,0 +1,21 @@
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// This file is used to define global variables//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+wave_period     8.0;
+rel_depth       0.4; // Water depth / wavelength
+steepness       0.005; // Wave height / wavelength
+wave_length     #calc "pow($wave_period,2)*tanh(2*M_PI*$rel_depth)*9.81/(2*M_PI)"; // Remember wave_length is a function of period and depth, so it cannot be arbitrarely chosen!
+
+water_depth     #calc "$rel_depth*$wave_length";
+wave_height     #calc "$steepness*$wave_length";
+
+Lg              $wave_length; // Generation zone length
+La              #calc "2*$wave_length"; // Absorption zone length
+Lp              #calc "2*$wave_length"; // Propagation zone length
+height_y        #calc "2*$wave_height"; // Height above MWL
+
+ref_level       3; // Refinement level at free surface
+CPH             10; // cells per wave height
+aspect_ratio    #calc "sqrt(3.0)";
+aspect_ratio_max    4;

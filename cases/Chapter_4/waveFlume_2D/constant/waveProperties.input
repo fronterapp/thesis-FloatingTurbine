@@ -1,0 +1,87 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.5                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      environmentalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//User-defined parameters
+#include "../myVars" //Include global variables
+
+// Start wavesProperties.input
+seaLevel	0.00;
+// A list of the relaxation zones in the simulation. The parameters are given
+// in <name>Coeffs below.
+relaxationNames (inlet outlet);
+
+initializationName inlet;
+
+inletCoeffs
+{
+    // Wave type to be used at boundary "inlet" and in relaxation zone "inlet"
+    waveType    stokesSecond;  
+    
+    // Ramp time of 2 s, default value: period
+    Tsoft       0;
+
+    // Water depth at the boundary and in the relaxation zone
+    depth       $water_depth;
+
+    // Wave period
+    period      $wave_period;
+
+    // Phase shift in the wave
+    phi         0.000000;
+
+    // Wave number vector, k. 
+    direction  (1.0 0.0 0.0);
+
+    // Wave height
+    height      $wave_height;
+    
+    debug       false;
+    
+    // Specifications on the relaxation zone shape and relaxation scheme
+    relaxationZone
+    {
+        relaxationScheme Spatial; // Two options: empty and spatial
+        relaxationShape  Rectangular; // Rectangular, Semi-cylindrical, cylindrical, frozen
+        beachType        Empty; // Slopped beach?
+    
+        relaxType   INLET; // Options are INLET and OUTLET
+        startX      (0 #calc "-$water_depth" 0.0); //StartX and EndX define the corners of a box containing the relaxation zone
+        endX        ($Lg $height_y 0.1);
+        orientation      (1.0 0.0 0.0);
+	// By default, an exponential relaxation weight is used, see Manual page 19 for other options
+    }
+};
+
+outletCoeffs
+{
+    waveType    potentialCurrent; // Current which is uniform over the depth
+    U           (0 0 0);
+    Tsoft       0.1;
+
+    relaxationZone
+    {
+        relaxationScheme Spatial;
+        relaxationShape  Rectangular;
+        beachType        Empty;    
+
+        relaxType   OUTLET;
+        startX      (#calc "$Lg+$Lp" #calc "-$water_depth" 0.0);
+        endX        (#calc "$Lg+$Lp+$La" $height_y  0.1);
+        orientation      (1.0 0.0 0.0);
+    }
+};
+
+// ************************************************************************* //

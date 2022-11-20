@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Use the correct decomposeParDict
+rm ./system/decomposeParDict
+cp ./system/decomposeParDict_pre ./system/decomposeParDict
+
+# Get number of processors from decomposePar dict
+nProc=$(getNumberOfProcessors)
+
+restore0Dir
+
+#Run blockMesh
+runApplication blockMesh
+
+#Decompose mesh for snappyHex
+runApplication decomposePar
+
+#Run snappyMesh
+mesh_application="mpirun --oversubscribe -np $nProc snappyHexMesh -overwrite -parallel"
+runApplication $mesh_application
+mv log.mpirun log.snappyHexMesh
+#### runApplication snappyHexMesh -overwrite
+
+#Reconstruct mesh
+#This is needed, see https://www.cfd-online.com/Forums/openfoam-meshing/239688-cannot-find-patchfield-entry.html
+runApplication reconstructParMesh -mergeTol 1e-06 -latestTime -constant
+
+#Remove parallel files
+rm -rf processor*
+rm -rf log.decomposePar
+
+# Run topoSet
+runApplication topoSet
+
+# copy "points" file from 0/polyMesh to constant/polyMesh
+cp -fr 0/polyMesh/points constant/polyMesh/points
