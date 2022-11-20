@@ -2,15 +2,23 @@ CFD Simulation of a Floating Wind Turbine with OpenFOAM
 ============
 ![OpenFOAM v2012](https://img.shields.io/badge/OpenFOAM-v2012-brightgreen.svg)
 
+![simulationFloatingTurbine](https://user-images.githubusercontent.com/104892099/202909133-f9e5fe98-97e3-451a-807a-7d1902d009d9.png)
+
 This page contains all simulation cases, modified libraries and post-processing tools from the Master Thesis
 __"CFD Simulation of a Floating Wind Turbine with OpenFOAM: an FSI approach based on the actuator line and relaxation zone methods"__
 by Pere Frontera.
 
 Uploaded for educational purposes only.
 
+Contents
+-----
+- **cases**: contains the necessary OpenFOAM files to reproduce the simulation cases from the thesis.
+- **libraries**: contains the two modified libraries required for the simulations from chapters 6 and 7.
+- **other**: contains post-processing and job submission (PBS) scripts.
+
 Usage
 -----
-Refer to the `readme.md` from within the different folders.
+Refer to the `README.md` from within the different folders.
 
 Publications
 ------------
