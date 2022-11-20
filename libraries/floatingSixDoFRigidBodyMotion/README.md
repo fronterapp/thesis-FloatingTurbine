@@ -36,7 +36,7 @@ motionSolverLibs ("libfloatingSixDoFRigidBodyMotion.so");
 ```
 Usage
 -----
-Refer to the thesis document (sections 7.1.2 and B.2) and tutorial cases from the `cases/Tests` folder.
+Refer to the thesis document (sections 7.1.2 and B.2) and tutorial cases from the `cases/Tests/RigidBody_ALM` folder.
 
 Acknowledgements
 ----------------
