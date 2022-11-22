@@ -18,13 +18,4 @@ numberOfSubdomains 20; // number of CPUs
 
 method          scotch;
 
-manualCoeffs
-{
-    dataFile        "";
-}
-
-distributed     no;
-
-roots           ( );
-
 // ************************************************************************* //
