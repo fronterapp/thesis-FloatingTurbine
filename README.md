@@ -22,7 +22,7 @@ Refer to the `README.md` from within the different folders.
 
 Publications
 ------------
-TBD.
+Pere Frontera. "CFD Simulation of a Floating Wind Turbine with OpenFOAM: an FSI approach based on the actuator line and relaxation zone methods". MSc Thesis. TU Delft, 2022. An electronic version of this thesis is available at [http://repository.tudelft.nl](http://resolver.tudelft.nl/uuid:1911a06e-da04-4047-b51c-8a4b563d43d2) .
 
 Acknowledgements
 ----------------
