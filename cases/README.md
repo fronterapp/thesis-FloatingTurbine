@@ -1,7 +1,8 @@
 Simulation cases
 ============
-
 This folder contains all simulation setups from the thesis, divided by chapter:
+
+![floatGIF](https://user-images.githubusercontent.com/104892099/205908811-fac35ff3-1141-4ad4-b0d0-4f4e8853a0b8.gif)
 
 - **Chapter 4**: Wave propagation (Stokes second-order) through a 2D wave flume.
 - **Chapter 5**: Floating body:
