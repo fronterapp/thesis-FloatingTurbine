@@ -24,8 +24,6 @@ Publications
 ------------
 Pere Frontera. _"CFD Simulation of a Floating Wind Turbine with OpenFOAM: an FSI approach based on the actuator line and relaxation zone methods"_. MSc Thesis. TU Delft, 2022. An electronic version of this thesis is available at [http://repository.tudelft.nl](http://resolver.tudelft.nl/uuid:1911a06e-da04-4047-b51c-8a4b563d43d2).
 
-![floatingGIF](https://user-images.githubusercontent.com/104892099/205907005-3ed8ec98-5732-43bb-b2a0-f4c8d7cabe65.gif)
-
 Acknowledgements
 ----------------
 __OpenFOAM__ is free, open source software for computational fluid dynamics (CFD),
