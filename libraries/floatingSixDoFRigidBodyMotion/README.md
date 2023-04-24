@@ -27,9 +27,10 @@ Apart from the above-mentioned features, the following has been modified:
 
 Installation
 -----
-1. Copy the `floatingSixDoFRigidBodyMotion` folder to `$WM_PROJECT_USER_DIR/src`.
-2. Run `wmake`.
-3. Include the following line in your `dynamicMeshDict` file:
+1. Create an empty folder called `src` within `$WM_PROJECT_USER_DIR` (only if it doesn't exist already).
+2. Copy the `floatingSixDoFRigidBodyMotion` folder to `$WM_PROJECT_USER_DIR/src`.
+3. Run `wmake`.
+4. Include the following line in your `dynamicMeshDict` file:
 
 ```cpp
 motionSolverLibs ("libfloatingSixDoFRigidBodyMotion.so");
