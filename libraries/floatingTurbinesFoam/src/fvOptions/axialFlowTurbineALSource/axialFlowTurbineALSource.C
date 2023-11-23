@@ -777,8 +777,7 @@ void Foam::fv::axialFlowTurbineALSource::computeRigidBodyLoads(scalar rhoRef, ve
     }
 
     // Moment from rotor/hub to map into the rigid body
-    // The component parallel to the rotor axis is not transmitted!
-    vector rbMoment = moment - (moment & axis_)*axis_;
+    vector rbMoment = moment;
 
     // Account for tower and nacelle moments
     if (hasTower_)
