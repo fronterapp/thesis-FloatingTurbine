@@ -14,7 +14,6 @@ $(restraints)/tabulatedAxialAngularSpring/tabulatedAxialAngularSpring.C
 $(restraints)/linearDamper/linearDamper.C
 $(restraints)/sphericalAngularDamper/sphericalAngularDamper.C
 $(restraints)/linearSpringDamper/linearSpringDamper.C
-$(restraints)/constantForce/constantForce.C
 $(restraints)/constantLoad/constantLoad.C
 $(restraints)/turbineAL/turbineAL.C
 $(restraints)/gyroscopicMoment/gyroscopicMoment.C
