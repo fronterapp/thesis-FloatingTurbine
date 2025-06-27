@@ -78,11 +78,17 @@ protected:
         //- Number of blade elements
         label nElements_;
 
+        //- question //Velocity of the element associated to prescribed/rigidBody motion
+        // vector motionVelocity_;
+
         //- Free stream velocity
         vector freeStreamVelocity_;
 
         //- Free stream direction
         vector freeStreamDirection_;
+
+        //- Pitch relative flow velocity
+        vector pitchRelativeVelocity_;
 
         //- Total force vector from all elements
         vector force_;
@@ -102,17 +108,29 @@ protected:
         //- Switch for harmonic pitching
         bool harmonicPitchingActive_;
 
+        // New- Switch for wind pitching
+        bool windPitchingActive_;
+
+        // New
+        scalar lastPitchAngle_;
+
         //- Reduced frequency of harmonic pitching = omega*c/(2*UInfty)
         scalar reducedFreq_;
 
         //- Amplitude of harmonic pitching in degrees
         scalar pitchAmplitude_;
 
+        // - Height of turbine's hub
+        scalar hubHeight_;
+
         //- Time value to track whether to move
         scalar lastMotionTime_;
 
         //- Mean chord length of all elements
         scalar chordLength_;
+
+        //- Relative velocity at the hub
+        scalar Urel_;
 
         //- Aspect ratio
         scalar aspectRatio_;
@@ -152,6 +170,12 @@ protected:
 
         //- Center of rotation of the prescribed/rigidBody motion
         vector rotCenter_;
+
+        //- rigidBody linaer velocity
+        vector linearVelocity_;
+
+        //- rigidBody angular velocity
+        vector angularVelocity_;
 
         //- Center of rotation at previous time of the prescribed/rigidBody motion
         vector prevRotCenter_;
@@ -194,6 +218,9 @@ protected:
 
         //- Execute harmonic pitching for a single time step
         void harmonicPitching();
+
+        //-New Execute wind pitching for a single time step
+        void windPitching(const volVectorField& Uin);
 
         //- Initialise motion orientation according to prescribed motion
         void prescribedMotionInitialise();
@@ -252,6 +279,9 @@ public:
 
             //- Return const reference to the current orientation
             const tensor& orientation();
+
+            //- Return pitch relative velocity
+            const vector& pitchRelativeVelocity();
 
             //- Return const reference to the previous orientation
             const tensor& prevOrientation();
