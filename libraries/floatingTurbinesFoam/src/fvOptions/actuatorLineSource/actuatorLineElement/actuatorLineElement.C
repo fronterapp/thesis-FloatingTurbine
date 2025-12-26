@@ -724,7 +724,7 @@ Foam::scalar Foam::fv::actuatorLineElement::inflowRefAngle()
     scalar cosAngle = (-relativeVelocity_ & chordRefDirection_) / den;
 
     // Since cosAngle is computed from a float dot product,
-    // there is a change the result is greater than 1 or
+    // there is a chance the result is greater than 1 or
     // smaller than -1 by some small value, in such case
     // the acos function will return nan(ind). 
     // This actually happened... 
