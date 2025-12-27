@@ -65,6 +65,7 @@ bool Foam::fv::actuatorLineSource::read(const dictionary& dict)
         coeffs_.lookup("elementGeometry") >> elementGeometry_;
         coeffs_.lookup("nElements") >> nElements_;
         coeffs_.lookup("freeStreamVelocity") >> freeStreamVelocity_;
+        coeffs_.lookup("hubHeight") >> hubHeight_;
         freeStreamDirection_ = freeStreamVelocity_/mag(freeStreamVelocity_);
         endEffectsActive_ = coeffs_.lookupOrDefault("endEffects", false);
 
@@ -80,6 +81,10 @@ bool Foam::fv::actuatorLineSource::read(const dictionary& dict)
         harmonicPitchingActive_ = pitchDict.lookupOrDefault("active", false);
         reducedFreq_ = pitchDict.lookupOrDefault("reducedFreq", 0.0);
         pitchAmplitude_ = pitchDict.lookupOrDefault("amplitude", 0.0);
+
+        //New- Read wind pitching parameters if present
+        dictionary pitchDict = coeffs_.subOrEmptyDict("windPitching");
+        windPitchingActive_ = pitchDict.lookupOrDefault("active", false);
 
         // Read prescribed motion dictionary if present
         prescribedMotionDict_ = coeffs_.subOrEmptyDict("prescribedMotion");
@@ -531,7 +536,122 @@ void Foam::fv::actuatorLineSource::harmonicPitching()
         scalar dt = mesh_.time().deltaT().value();
         scalar deltaPitch = degToRad(pitchAmplitude_)*(sin(omega*t)
                           - sin(omega*(t - dt)));
+        pitch(deltaPitch, 0);
+        lastMotionTime_ = t;
+    }
+}
+
+void Foam::fv::actuatorLineSource::windPitching(const fvMesh& mesh)
+{
+    // Pitch the actuator line if wind speed reaches threshold and time has changed
+    scalar t = mesh_.time().value();
+    if (t != lastMotionTime_)
+    {   
+        readRigidBodyDict(mesh);
+        rigidBodyDict_.lookup("velocity") >> linearVelocity_;
+        rigidBodyDict_.lookup("omega") >> angularVelocity_;
+    
+        // Calculate the relative speed to determine whether to pitch or not
+        scalar Uhub = freeStreamVelocity_.x();
+        scalar Umotionx = linearVelocity_.x();  //The speed brought by the Surge
+        scalar Upitch = angularVelocity_.y();  //The relative velocity caused by pitch motion at the hub
+        Urel_ = Uhub - Umotionx - Upitch*hubHeight_; 
+        
+        scalar targetPitch = 0;
+
+        // Calculate the target pitch angle based on the relative velocity
+        if (Urel_ >= 10.673 &&  Urel_ < 11.17)
+        {
+            targetPitch = 0.512;
+        }
+        if (Urel_ >= 11.17 &&  Urel_ < 11.7)
+        {
+            targetPitch = 3.72;
+        }
+        if (Urel_ >= 11.7 &&  Urel_ < 12.26)
+        {
+            targetPitch = 5.39;
+        }
+        if (Urel_ >= 12.26 &&  Urel_ < 12.84)
+        {
+            targetPitch = 6.76;
+        }
+        if (Urel_ >= 12.84 &&  Urel_ < 13.46)
+        {
+            targetPitch = 7.98;
+        }
+        if (Urel_ >= 13.46 &&  Urel_ < 14.10)
+        {
+            targetPitch = 9.12;
+        }
+        if (Urel_ >= 14.10 &&  Urel_ < 14.77)
+        {
+            targetPitch = 10.2;
+        }
+        if (Urel_ >= 14.77 &&  Urel_ < 15.47)
+        {
+            targetPitch = 11.23;
+        }
+        if (Urel_ >= 15.47 &&  Urel_ < 16.18)
+        {
+            targetPitch = 12.23;
+        }
+        if (Urel_ >= 16.18 &&  Urel_ < 16.92)
+        {
+            targetPitch = 13.21;
+        }
+        if (Urel_ >= 16.92 &&  Urel_ < 17.67)
+        {
+            targetPitch = 14.16;
+        }
+        if (Urel_ >= 17.67 &&  Urel_ < 18.44)
+        {
+            targetPitch = 15.10;
+        }
+        if (Urel_ >= 18.44 &&  Urel_ < 19.23)
+        {
+            targetPitch = 16.02;
+        }
+        if (Urel_ >= 19.23 &&  Urel_ < 20.03)
+        {
+            targetPitch = 16.93;
+        }
+        if (Urel_ >= 20.03 &&  Urel_ < 20.84)
+        {
+            targetPitch = 17.82;
+        }
+        if (Urel_ >= 20.84 &&  Urel_ < 21.66)
+        {
+            targetPitch = 18.70;
+        }
+        if (Urel_ >= 21.66 &&  Urel_ < 22.48)
+        {
+            targetPitch = 19.56;
+        }
+        if (Urel_ >= 22.48 &&  Urel_ < 23.32)
+        {
+            targetPitch = 20.41;
+        }
+        if (Urel_ >= 23.32 &&  Urel_ < 24.16)
+        {
+            targetPitch = 21.25;
+        }
+        if (Urel_ >= 24.16 &&  Urel_ < 25)
+        {
+            targetPitch = 22.07;
+        }
+        if (Urel_ >= 25)
+        {
+            targetPitch = 22.88;
+        }
+
+        scalar deltaPitch = targetPitch - lastPitchAngle_;
+
+        // Apply pitch
         pitch(deltaPitch);
+
+        //log pitch
+        lastPitchAngle_ = targetPitch;
         lastMotionTime_ = t;
     }
 }
@@ -767,7 +887,9 @@ Foam::fv::actuatorLineSource::actuatorLineSource
     const dictionary& dict,
     const fvMesh& mesh
 )
-:
+:   
+    pitchRelativeVelocity_(vector::zero),
+    freeStreamVelocity_(vector::zero),
     cellSetOption(name, modelType, dict, mesh),
     force_(vector::zero),
     forceField_
@@ -809,6 +931,7 @@ Foam::fv::actuatorLineSource::actuatorLineSource
     {
         calcEndEffects();
     }
+    lastPitchAngle_ = 0.0;        // 初始桨距角为 0
 }
 
 
@@ -864,6 +987,11 @@ void Foam::fv::actuatorLineSource::pitch(scalar radians)
     {
         elements_[i].pitch(radians);
     }
+}
+
+const Foam::vector& Foam::fv::actuatorLineSource::pitchRelativeVelocity()
+{
+    return pitchRelativeVelocity_;
 }
 
 
@@ -1224,6 +1352,12 @@ void Foam::fv::actuatorLineSource::addSup //- Source term to momentum equation
         harmonicPitching();
     }
 
+    // If wind pitching is active, do wind pitching
+    if (windPitchingActive_)
+    {
+        windPitching();
+    }
+
     // If prescribed motion is active, move the actuator line accordingly
     if (prescribedMotionActive_)
     {
@@ -1280,6 +1414,11 @@ void Foam::fv::actuatorLineSource::addSup //- Source term to turbulence scalars
         harmonicPitching();
     }
 
+    if (windPitchingActive_)
+    {
+        windPitching();
+    }
+
     // If prescribed motion is active, move the actuator line accordingly
     if (prescribedMotionActive_)
     {
@@ -1316,6 +1455,11 @@ void Foam::fv::actuatorLineSource::addSup //- Source term to compressible moment
     if (harmonicPitchingActive_)
     {
         harmonicPitching();
+    }
+
+    if (windPitchingActive_)
+    {
+        windPitching();
     }
 
     // If prescribed motion is active, move the actuator line accordingly
